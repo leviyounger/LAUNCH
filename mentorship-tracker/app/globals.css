@@ -1,0 +1,350 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  color-scheme: light;
+
+  --paper:  #FFFFFF;
+  --mist:   #F5F5F7;
+  --hair:   #D2D2D7;
+  --ink:    #1D1D1F;
+  --grey:   #6E6E73;
+  --quiet:  #86868B;
+
+  --violet:      #8B5CF6;   /* glows and gradients */
+  --violet-deep: #7C3AED;   /* anything that is words or a button */
+  --red-deep:    #C2134A;   /* a number going the wrong way */
+  --teal-deep:   #0A6E6A;   /* a number going the right way */
+
+  --ui: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
+        'Inter', 'Segoe UI', system-ui, Roboto, Helvetica, Arial, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  min-height: 100%;
+  background:
+    radial-gradient(90% 60% at 18% 0%,  #FFFFFF 0%, rgba(255,255,255,0) 60%),
+    linear-gradient(158deg, #F2F3F7 0%, #E6E9F0 44%, #D8DCE6 100%);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: var(--ui);
+  font-size: 17px;
+  line-height: 1.55;
+  letter-spacing: -0.011em;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100%;
+}
+
+/* A slowly drifting field of brand color, so the glass has something to refract. */
+.field-bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.field-bg::after {
+  content: ''; position: absolute; inset: 0;
+  background-image:
+    linear-gradient(to right,  rgba(29,29,31,.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(29,29,31,.055) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(120% 90% at 50% 20%, #000 35%, transparent 85%);
+  -webkit-mask-image: radial-gradient(120% 90% at 50% 20%, #000 35%, transparent 85%);
+}
+.field-bg span { position: absolute; display: block; border-radius: 50%; filter: blur(90px); will-change: transform; }
+.blob-a {
+  width: 62vw; height: 62vw; left: -18vw; top: -26vw;
+  background: radial-gradient(circle at 50% 50%, rgba(139,92,246,.38) 0%, rgba(139,92,246,0) 68%);
+  animation: driftA 26s ease-in-out infinite;
+}
+.blob-b {
+  width: 58vw; height: 58vw; right: -16vw; top: -20vw;
+  background: radial-gradient(circle at 50% 50%, rgba(150,165,200,.42) 0%, rgba(150,165,200,0) 68%);
+  animation: driftB 31s ease-in-out infinite;
+}
+.blob-c {
+  width: 46vw; height: 46vw; left: 32vw; bottom: -30vw;
+  background: radial-gradient(circle at 50% 50%, rgba(139,92,246,.20) 0%, rgba(176,186,210,.20) 55%, rgba(255,255,255,0) 72%);
+  animation: driftA 38s ease-in-out infinite reverse;
+}
+@keyframes driftA { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(7vw,5vw,0) scale(1.12); } }
+@keyframes driftB { 0%,100% { transform: translate3d(0,0,0) scale(1.05); } 50% { transform: translate3d(-6vw,7vw,0) scale(.94); } }
+
+.shell { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding-block: 60px 84px; padding-left: 22px; padding-right: 22px; }
+.shell.narrow { max-width: 600px; }
+
+/* ---------- type ---------- */
+.kicker { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--violet-deep); }
+h1 { font-size: clamp(42px, 7.4vw, 76px); font-weight: 700; line-height: 1.0; letter-spacing: -0.042em; margin-top: 16px; text-wrap: balance; }
+h2 { font-size: clamp(26px, 3.6vw, 36px); font-weight: 700; line-height: 1.08; letter-spacing: -0.032em; text-wrap: balance; }
+.lead { font-size: 19px; line-height: 1.5; letter-spacing: -0.014em; color: var(--grey); margin-top: 16px; max-width: 54ch; }
+.sm { font-size: 15px; color: var(--grey); }
+.logo {
+  display: block; width: 118px; height: 31px;
+  background-color: transparent;
+  background-image: linear-gradient(118deg, #6D28D9 0%, #8B5CF6 52%, #A78BFA 100%);
+  -webkit-mask-image: url('/logo.png'); mask-image: url('/logo.png');
+  -webkit-mask-size: contain;   mask-size: contain;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: left center; mask-position: left center;
+  /* the white glow sits behind the letterforms, not behind the box */
+  filter:
+    drop-shadow(0 0  6px rgba(255,255,255,1))
+    drop-shadow(0 0 16px rgba(255,255,255,.95))
+    drop-shadow(0 0 34px rgba(255,255,255,.75));
+}
+.logo.sm { width: 94px; height: 25px; }
+.logo-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.logo + h1, .topbar + h1 { margin-top: 26px; }
+
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+/* ---------- panels ---------- */
+.panel {
+  position: relative; overflow: hidden;
+  background: linear-gradient(170deg, rgba(255,255,255,.66), rgba(255,255,255,.40));
+  backdrop-filter: blur(40px) saturate(190%) brightness(1.06);
+  -webkit-backdrop-filter: blur(40px) saturate(190%) brightness(1.06);
+  border: 1px solid rgba(255,255,255,.9);
+  border-radius: 28px;
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,1),
+    inset 0 -1px 1px rgba(255,255,255,.7),
+    0 0 28px rgba(255,255,255,.6),
+    0 2px 6px rgba(38,42,58,.09),
+    0 22px 48px rgba(38,42,58,.16);
+}
+/* the highlight that runs along the top edge of real glass */
+.panel::before {
+  content: ''; position: absolute; left: 8%; right: 8%; top: 0; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.95) 45%, rgba(255,255,255,0));
+}
+@supports not (backdrop-filter: blur(1px)) { .panel { background: rgba(255,255,255,.94); } }
+.pad { padding: 28px; }
+.stack { display: grid; gap: 20px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 560px) { .row2 { grid-template-columns: 1fr; } }
+
+/* ---------- form ---------- */
+.field label { display: block; font-size: 13px; font-weight: 600; letter-spacing: -0.004em; color: var(--ink); margin-bottom: 7px; }
+.field .sub { display: block; font-size: 13px; color: var(--quiet); font-weight: 400; margin-top: 2px; }
+
+input {
+  width: 100%; font-family: inherit; font-size: 16px; color: var(--ink); letter-spacing: -0.01em;
+  background: rgba(255,255,255,.72); border: 1px solid rgba(255,255,255,.9); border-radius: 12px;
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  padding: 12px 14px; outline: none;
+  transition: border-color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+input::placeholder { color: var(--quiet); }
+input:focus { border-color: var(--violet); background: var(--paper); box-shadow: 0 0 0 3px rgba(139,92,246,.16); }
+input:focus-visible, button:focus-visible { outline: 2px solid var(--violet-deep); outline-offset: 2px; }
+
+button.primary {
+  width: 100%; cursor: pointer; font-family: inherit; font-size: 16px; font-weight: 500;
+  letter-spacing: -0.01em; color: #fff; background: var(--violet-deep);
+  border: 0; border-radius: 100px; padding: 13px 26px;
+  transition: filter .18s ease, transform .18s ease;
+}
+button.primary:hover { filter: brightness(1.06); }
+button.primary:active { transform: scale(.985); }
+button.primary:disabled { opacity: .45; cursor: default; transform: none; }
+
+button.quiet {
+  cursor: pointer; font-family: inherit; font-size: 15px; font-weight: 500; letter-spacing: -0.01em;
+  color: var(--ink); background: rgba(255,255,255,.66); border: 1px solid rgba(255,255,255,.9);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 0 16px rgba(255,255,255,.6), 0 2px 6px rgba(38,42,58,.08);
+  border-radius: 100px; padding: 10px 18px;
+}
+button.quiet:hover { background: var(--paper); }
+
+.err { color: var(--red-deep); font-size: 15px; }
+.ok  { color: var(--teal-deep); font-size: 15px; }
+
+/* ---------- tiles ---------- */
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(258px, 1fr)); gap: 26px; }
+
+/* A tile is a thick lens of clear glass, not a frosted card.
+   You should be able to see the page through it. */
+.tile {
+  --r: 34px;
+  position: relative; overflow: hidden; isolation: isolate;
+  text-align: left; font-family: inherit; color: inherit; width: 100%;
+  /* every tile is exactly the same box, whatever the name length */
+  display: flex; flex-direction: column;
+  height: 248px;
+  padding: 26px 24px 24px;
+  border: 0;
+  border-radius: var(--r);
+  background:
+    linear-gradient(152deg,
+      rgba(255,255,255,.40) 0%,
+      rgba(255,255,255,.10) 48%,
+      rgba(255,255,255,.28) 100%);
+  /* enough blur that the field behind smears the way a real window does */
+  backdrop-filter: blur(26px) saturate(185%) brightness(1.10);
+  -webkit-backdrop-filter: blur(26px) saturate(185%) brightness(1.10);
+  box-shadow:
+    inset 0  1px 1px rgba(255,255,255,1),        /* top bevel catching light */
+    inset 0 -1px 1px rgba(255,255,255,.75),      /* bottom bevel */
+    inset 0  30px 40px -34px rgba(255,255,255,.95),
+    inset 0 -30px 40px -34px rgba(255,255,255,.85),
+    0 0 26px rgba(255,255,255,.75),              /* the white glow, tight */
+    0 0 64px rgba(255,255,255,.55),              /* and wide */
+    0 2px 6px rgba(38,42,58,.10),
+    0 22px 48px rgba(38,42,58,.20);
+  transition: transform .45s cubic-bezier(.2,.8,.2,1), box-shadow .45s cubic-bezier(.2,.8,.2,1);
+}
+button.tile { cursor: pointer; }
+
+/* the bright rim around the silhouette, uneven the way real glass catches light */
+.rim {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  border-radius: inherit; padding: 1.5px;
+  background: linear-gradient(142deg,
+    rgba(255,255,255,1)   0%,
+    rgba(255,255,255,.42) 26%,
+    rgba(255,255,255,.95) 50%,
+    rgba(255,255,255,.38) 72%,
+    rgba(255,255,255,.9)  100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+
+/* the second surface: where thick glass meets its own inner wall */
+.edge {
+  position: absolute; inset: 13px; z-index: 1; pointer-events: none;
+  border-radius: calc(var(--r) - 13px);
+  border: 1px solid rgba(255,255,255,.42);
+}
+
+/* the specular dome sitting on the top surface */
+.gloss {
+  position: absolute; left: -14%; right: -14%; top: -72%; height: 126%; z-index: 1;
+  pointer-events: none; border-radius: 50%;
+  background: radial-gradient(52% 46% at 44% 100%,
+    rgba(255,255,255,.95) 0%, rgba(255,255,255,.40) 44%, rgba(255,255,255,0) 72%);
+}
+
+/* prismatic dispersion along the lower rim, the way a real lens splits light */
+.prism {
+  position: absolute; left: 9%; right: 9%; bottom: 1px; height: 2px; z-index: 1;
+  pointer-events: none; border-radius: 100px; filter: blur(1.2px);
+  background: linear-gradient(90deg,
+    rgba(139,92,246,0) 0%, rgba(139,92,246,.42) 26%,
+    rgba(167,139,250,.55) 52%, rgba(139,92,246,.38) 74%, rgba(139,92,246,0) 100%);
+  opacity: .85;
+}
+
+/* the travelling sheen */
+.tile::before {
+  content: ''; position: absolute; inset: -50% -70%; z-index: 1; pointer-events: none;
+  background: linear-gradient(104deg,
+    rgba(255,255,255,0) 38%,
+    rgba(255,255,255,.75) 49%,
+    rgba(255,255,255,.95) 51%,
+    rgba(255,255,255,0) 62%);
+  transform: translateX(-62%) rotate(2deg);
+  opacity: 0;
+  transition: transform .95s cubic-bezier(.22,.75,.2,1), opacity .35s ease;
+  animation: drift-sheen 9s cubic-bezier(.4,0,.2,1) infinite;
+}
+@keyframes drift-sheen {
+  0%        { transform: translateX(-62%) rotate(2deg); opacity: 0; }
+  16%       { opacity: .38; }
+  42%, 100% { transform: translateX(62%) rotate(2deg); opacity: 0; }
+}
+
+/* colour picked up through the glass */
+.tile::after {
+  content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; border-radius: inherit;
+  background:
+    radial-gradient(62% 90% at 2% 0%,     rgba(139,92,246,.20) 0%, rgba(139,92,246,0) 60%),
+    radial-gradient(64% 94% at 100% 100%, rgba(167,139,250,.22) 0%, rgba(167,139,250,0) 62%);
+  opacity: .5; transition: opacity .45s ease;
+}
+
+.tile:hover, .tile:focus-visible {
+  transform: translateY(-5px);
+  box-shadow:
+    inset 0  1px 1px rgba(255,255,255,1),
+    inset 0 -1px 1px rgba(255,255,255,.85),
+    inset 0  30px 40px -34px rgba(255,255,255,1),
+    inset 0 -30px 40px -34px rgba(255,255,255,.95),
+    0 0 40px rgba(255,255,255,.95),
+    0 0 96px rgba(255,255,255,.75),
+    0 16px 34px rgba(139,92,246,.22),
+    0 34px 70px rgba(38,42,58,.26);
+}
+.tile:hover::before, .tile:focus-visible::before { animation: none; transform: translateX(62%) rotate(2deg); opacity: 1; }
+.tile:hover::after,  .tile:focus-visible::after  { opacity: 1; }
+.tile .in { position: relative; z-index: 2; display: flex; flex-direction: column; height: 100%; }
+
+.rank {
+  position: absolute; top: 14px; right: 20px; z-index: 3; line-height: 1;
+  font-size: 34px; font-weight: 700; letter-spacing: -0.04em;
+  color: rgba(29,29,31,.13); font-variant-numeric: tabular-nums;
+}
+.tile.top1 .rank { color: rgba(124,58,237,.34); }
+.tile.top1::after { opacity: .78; }
+.tile.top1::before { animation: sweep 5s cubic-bezier(.4,0,.2,1) infinite; }
+@keyframes sweep {
+  0%        { transform: translateX(-62%) rotate(2deg); opacity: 0; }
+  16%       { opacity: .95; }
+  45%, 100% { transform: translateX(62%) rotate(2deg); opacity: 0; }
+}
+.tile.top1 .prism { opacity: 1; height: 3px; filter: blur(1.4px); }
+.crown {
+  position: absolute; left: 12%; right: 12%; top: 1px; height: 2px; z-index: 2; border-radius: 100px;
+  background: linear-gradient(90deg, rgba(139,92,246,0), var(--violet) 26%, #A78BFA 74%, rgba(167,139,250,0));
+  filter: blur(.4px);
+}
+
+.tile.you .edge { border-color: rgba(10,110,106,.34); }
+.youtag {
+  display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--teal-deep); background: rgba(10,110,106,.12); border-radius: 100px; padding: 3px 9px;
+  margin-left: 8px; vertical-align: 2px;
+}
+
+.tile .nm { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; display: block; padding-right: 44px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile .hd { font-size: 13px; color: var(--grey); margin-top: 1px; display: block; }
+.tile .big { font-size: 40px; font-weight: 700; letter-spacing: -0.038em; margin-top: auto; display: block; line-height: 1; font-variant-numeric: tabular-nums; }
+.tile .mt { font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--quiet); margin-top: 8px; display: block; }
+.chip {
+  align-self: flex-start; display: inline-block; margin-top: 13px; border-radius: 100px; padding: 6px 13px;
+  font-size: 14px; font-weight: 600; letter-spacing: -0.01em; font-variant-numeric: tabular-nums;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.6);
+}
+.chip.up   { background: rgba(10,110,106,.14); color: var(--teal-deep); }
+.chip.down { background: rgba(254,44,85,.14);  color: var(--red-deep); }
+.chip.flat { background: rgba(29,29,31,.07);   color: var(--quiet); }
+
+/* ---------- stats ---------- */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
+.stat {
+  background: linear-gradient(160deg, rgba(255,255,255,.62), rgba(255,255,255,.34));
+  backdrop-filter: blur(24px) saturate(180%) brightness(1.06);
+  -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(1.06);
+  border: 1px solid rgba(255,255,255,.88); border-radius: 18px; padding: 18px 19px;
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,1),
+    0 0 20px rgba(255,255,255,.55),
+    0 2px 5px rgba(38,42,58,.08),
+    0 12px 26px rgba(38,42,58,.12);
+}
+.stat .k { font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--grey); }
+.stat .v { font-size: 29px; font-weight: 700; letter-spacing: -0.032em; margin-top: 6px; font-variant-numeric: tabular-nums; }
+
+/* ---------- chart ---------- */
+.chart-title { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+.tipline { font-size: 13px; color: var(--quiet); margin-top: 8px; min-height: 18px; font-variant-numeric: tabular-nums; }
+.tipline strong { color: var(--ink); font-weight: 600; }
+
+.empty { color: var(--quiet); font-size: 16px; padding: 16px 0; }
+.foot { margin-top: 52px; padding-top: 20px; border-top: 1px solid var(--hair); font-size: 13px; color: var(--quiet); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+  .tile::before { display: none; }
+}
