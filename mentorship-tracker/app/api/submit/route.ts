@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sql, normalizeHandle, weekEnding } from '@/lib/db';
-import { safeEqual } from '@/lib/auth';
+import { programForCode } from '@/lib/program';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,27 +29,32 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Bad request.' }, { status: 400 });
   }
 
-  const expected = process.env.FORM_CODE || 'levi';
-  const given = typeof body.code === 'string' ? body.code.trim().toLowerCase() : '';
-  if (!safeEqual(given, expected.toLowerCase())) {
+  const program = programForCode(body.code);
+  if (!program) {
     return NextResponse.json({ error: 'Wrong code.' }, { status: 401 });
   }
 
   const displayName = typeof body.displayName === 'string' ? body.displayName.trim().slice(0, 120) : '';
-  const rawHandle = typeof body.handle === 'string' ? body.handle : '';
-  const handle = normalizeHandle(rawHandle).slice(0, 80);
+  const handle = normalizeHandle(typeof body.handle === 'string' ? body.handle : '').slice(0, 80);
 
   if (!displayName || !handle) {
     return NextResponse.json({ error: 'Name and TikTok handle are both required.' }, { status: 400 });
   }
 
+  const orders28 = count(body.orders28);
+  if (orders28 === null) {
+    return NextResponse.json({ error: 'Add your orders for the last 28 days. Use 0 if you have none yet.' }, { status: 400 });
+  }
+
   try {
     await sql`
-      insert into submissions (week_ending, handle, display_name, gmv_7, gmv_28, samples_sent, gmv_max_spend, videos_posted, lives_count)
+      insert into submissions (week_ending, handle, display_name, program, orders_28, gmv_7, gmv_28, samples_sent, gmv_max_spend, videos_posted, lives_count)
       values (
         ${weekEnding()}::date,
         ${handle},
         ${displayName},
+        ${program},
+        ${orders28},
         ${money(body.gmv7)},
         ${money(body.gmv28)},
         ${count(body.samples)},
@@ -58,9 +63,11 @@ export async function POST(req: Request) {
         ${count(body.lives)}
       )
       on conflict (handle, week_ending) do update set
-        display_name = excluded.display_name,
-        gmv_7        = excluded.gmv_7,
-        gmv_28       = excluded.gmv_28,
+        display_name  = excluded.display_name,
+        program       = excluded.program,
+        orders_28     = excluded.orders_28,
+        gmv_7         = excluded.gmv_7,
+        gmv_28        = excluded.gmv_28,
         samples_sent  = excluded.samples_sent,
         gmv_max_spend = excluded.gmv_max_spend,
         videos_posted = excluded.videos_posted,
