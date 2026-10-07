@@ -21,6 +21,8 @@ export async function GET() {
         id,
         handle,
         display_name,
+        program,
+        orders_28,
         week_ending::text as week_ending,
         gmv_7,
         gmv_28,
