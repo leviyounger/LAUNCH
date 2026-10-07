@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>The Board</title>
+<meta name="description" content="Weekly numbers for TikTok Mentorship members, mentored by Levi Younger.">
+<link rel="preload" href="archivo.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
+</head>
+<body>
+<main id="app" class="wrap narrow"></main>
+
+<script>
+(function () {
+  'use strict';
+
+  var API = window.TRACKER_API || '';
+  var ADMIN = /[?&#]admin\b/.test(location.search + location.hash);
+  var K = { code: 'mt_code', handle: 'mt_handle', name: 'mt_name', week: 'mt_week', pin: 'mt_pin' };
+
+  /* ---------- small helpers ---------- */
+  function get(k, s) { try { return (s || localStorage).getItem(k) || ''; } catch (e) { return ''; } }
+  function put(k, v, s) { try { (s || localStorage).setItem(k, v); } catch (e) {} }
+  function drop(k, s) { try { (s || localStorage).removeItem(k); } catch (e) {} }
+  function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function count(v) { return v == null ? '--' : Math.round(v).toLocaleString('en-US'); }
+  function money(v) { return v == null ? '--' : '$' + Math.round(v).toLocaleString('en-US'); }
+  function shortDate(iso) { var p = String(iso).split('-').map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2])).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }); }
+  function stamp(iso) { var t = new Date(iso); if (isNaN(t)) return ''; return t.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + t.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); }
+  function weekEnding() { var d = new Date(); var u = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())); u.setUTCDate(u.getUTCDate() + ((7 - u.getUTCDay()) % 7)); return u.toISOString().slice(0, 10); }
+  function $(id) { return document.getElementById(id); }
+  var LABEL = { academy: 'Academy', accelerator: 'Accelerator' };
+
+  function api(action, payload) {
+    var body = Object.assign({ action: action }, payload || {});
+    // No custom headers, so the browser sends a simple request Apps Script accepts.
+    return fetch(API, { method: 'POST', body: JSON.stringify(body), redirect: 'follow' })
+      .then(function (r) { return r.json(); });
+  }
+
+  function delta(d) {
+    if (d == null) return '<span class="chip flat">First week</span>';
+    if (Math.abs(d) < 0.005) return '<span class="chip flat">0%</span>';
+    var pct = Math.round(Math.abs(d) * 100);
+    return d > 0 ? '<span class="chip up">↑ ' + pct + '%</span>' : '<span class="chip down">↓ ' + pct + '%</span>';
+  }
+
+  function header(word, title, action) {
+    return '<header class="top"><div class="brand"><span class="wordmark">' + esc(word) + '</span><h1>' + esc(title) + '</h1></div>' + (action || '') + '</header>';
+  }
+  function foot(extra) {
+    return '<footer class="foot"><span>Mentored by Levi Younger</span>' + (extra || '') + '</footer>';
+  }
+  function pill(updated) {
+    return '<span class="pill glass' + (updated ? '' : ' wait') + '">' + (updated ? 'Updated ' + esc(stamp(updated)) : 'Waiting on submissions') + '</span>';
+  }
+
+  var app = $('app');
+  function wide(on) { app.className = on ? 'wrap' : 'wrap narrow'; }
+
+  /* =========================================================
+     Member side: code, then the weekly form, then the board
+     ========================================================= */
+  var state = { code: get(K.code), program: '', rows: [], updated: null, loaded: false };
+  function word() { return state.program === 'accelerator' ? 'ACCELERATOR' : 'ACADEMY'; }
+
+  function showCode(err) {
+    wide(false);
+    app.innerHTML =
+      header('ACADEMY', 'The Board') +
+      '<p class="lead">Enter the access code Levi gave you. You only have to do this once on this device.</p>' +
+      '<form class="panel glass" id="f"><div class="field"><label for="code">Access code</label>' +
+      '<input id="code" autocomplete="off" autocapitalize="none" placeholder="Type it here"></div>' +
+      '<button class="primary" type="submit">Continue</button>' + (err ? '<p class="err">' + esc(err) + '</p>' : '') + '</form>' + foot();
+    $('f').onsubmit = function (e) {
+      e.preventDefault();
+      var c = $('code').value.trim();
+      if (!c) return showCode('Enter the code you were given.');
+      state.code = c;
+      put(K.code, c);
+      route();
+    };
+  }
+
+  function showForm(err, sending) {
+    wide(false);
+    var h = get(K.handle);
+    var action = get(K.week) === weekEnding() ? '<button class="quiet glass" id="toBoard">Leaderboard</button>' : '';
+    app.innerHTML =
+      header(word(), 'This Week', action) +
+      '<p class="lead">Put your numbers in and the board opens up. Everyone sees orders only. Your dollar numbers go to Levi and nobody else.</p>' +
+      '<form class="panel glass" id="f">' +
+      '<div class="group"><div class="row2">' +
+      fld('name', 'Your name', '', 'First and last', get(K.name), 'text', 'name') +
+      fld('handle', 'TikTok handle', '', '@yourshop', h ? '@' + h : '', 'text', 'off') +
+      '</div></div>' +
+      '<div class="group"><div class="field feature"><label for="orders28">Orders, last 28 days<span class="sub">Seller Center home page. Set the date to Last 28 days and copy the Orders number. This is what shows on the board.</span></label>' +
+      '<input id="orders28" inputmode="numeric" placeholder="0"></div></div>' +
+      '<div class="group"><span class="eyebrow">Only Levi sees these</span>' +
+      '<div class="row2">' + fld('gmv7', 'GMV, last 7 days', 'Dollars, numbers only', '0', '', 'decimal') + fld('gmv28', 'GMV, last 28 days', 'Dollars, numbers only', '0', '', 'decimal') + '</div>' +
+      '<div class="row2">' + fld('samples', 'Samples sent', 'Products sent to creators', '0', '', 'numeric') + fld('spend', 'GMV Max spend', 'Dollars spent this week', '0', '', 'decimal') + '</div>' +
+      '<div class="row2">' + fld('videos', 'Videos you published', 'Your own, not affiliates', '0', '', 'numeric') + fld('lives', 'TikTok lives', 'How many times you went live', '0', '', 'numeric') + '</div>' +
+      '</div>' +
+      '<button class="primary" type="submit" id="go">Submit and see the board</button>' +
+      (err ? '<p class="err">' + esc(err) + '</p>' : '') +
+      '</form>' + foot();
+    if ($('toBoard')) $('toBoard').onclick = function () { showBoard(); };
+    $('f').onsubmit = submit;
+  }
+
+  function fld(id, label, sub, ph, val, mode, auto) {
+    var im = mode === 'numeric' || mode === 'decimal' ? ' inputmode="' + mode + '"' : '';
+    var ac = auto ? ' autocomplete="' + auto + '"' : '';
+    return '<div class="field"><label for="' + id + '">' + esc(label) + (sub ? '<span class="sub">' + esc(sub) + '</span>' : '') + '</label>' +
+      '<input id="' + id + '"' + im + ac + ' autocapitalize="' + (id === 'handle' ? 'none' : 'words') + '" placeholder="' + esc(ph) + '" value="' + esc(val) + '"></div>';
+  }
+
+  function submit(e) {
+    e.preventDefault();
+    var v = function (id) { return $(id).value.trim(); };
+    var payload = { code: state.code, displayName: v('name'), handle: v('handle'), orders28: v('orders28'), gmv7: v('gmv7'), gmv28: v('gmv28'), samples: v('samples'), spend: v('spend'), videos: v('videos'), lives: v('lives') };
+    var err = function (m) { var p = document.querySelector('#f .err'); if (!p) { p = document.createElement('p'); p.className = 'err'; $('f').appendChild(p); } p.textContent = m; };
+    if (!payload.displayName || !payload.handle) return err('Name and TikTok handle are both required.');
+    if (!payload.orders28) return err('Add your orders for the last 28 days. Use 0 if you have none yet.');
+    var btn = $('go'); btn.disabled = true; btn.textContent = 'Sending';
+    api('submit', payload).then(function (d) {
+      if (d.error === 'wrong_code') { drop(K.code); state.code = ''; return showCode('That code is not right. Check it with Levi.'); }
+      if (d.error) { btn.disabled = false; btn.textContent = 'Submit and see the board'; return err(d.error); }
+      put(K.handle, payload.handle.replace(/^@+/, '').toLowerCase());
+      put(K.name, payload.displayName);
+      put(K.week, d.week || weekEnding());
+      state.program = d.program || state.program;
+      showBoard();
+    }).catch(function () {
+      btn.disabled = false; btn.textContent = 'Submit and see the board';
+      err('Could not reach the tracker. Check your connection and try again.');
+    });
+  }
+
+  function showBoard() {
+    wide(true);
+    renderBoard();
+    api('board', { code: state.code }).then(function (d) {
+      if (d.error === 'wrong_code') { drop(K.code); state.code = ''; return showCode('That code is not right. Check it with Levi.'); }
+      state.rows = d.rows || []; state.updated = d.updated; state.program = d.program || state.program; state.loaded = true;
+      renderBoard();
+    }).catch(function () { state.loaded = true; renderBoard('Could not load the board. Refresh to try again.'); });
+  }
+
+  function renderBoard(err) {
+    var rows = state.rows, me = get(K.handle);
+    var myRank = 0; rows.forEach(function (r, i) { if (r.handle === me) myRank = i + 1; });
+    var total = rows.reduce(function (s, r) { return s + (r.orders28 || 0); }, 0);
+    var max = Math.max(1, rows[0] ? rows[0].orders28 || 0 : 0);
+    var list;
+    if (!state.loaded) list = '<p class="empty">Loading the board.</p>';
+    else if (err) list = '<p class="empty">' + esc(err) + '</p>';
+    else if (!rows.length) list = '<p class="empty">Nobody has submitted yet. You are first.</p>';
+    else list = rows.map(function (r, i) {
+      var you = r.handle === me;
+      return '<div class="lb' + (i === 0 ? ' first' : '') + (i < 3 ? ' top' : '') + (you ? ' you' : '') + '">' +
+        '<span class="rk">' + (i + 1) + '</span>' +
+        '<span class="who"><span class="h">' + esc(r.name) + '<span class="hd">@' + esc(r.handle) + '</span>' + (you ? '<span class="youtag">You</span>' : '') + '</span>' +
+        '<span class="track"><span class="fill" style="width:' + Math.max(2, (r.orders28 || 0) / max * 100).toFixed(1) + '%"></span></span></span>' +
+        delta(r.delta) +
+        '<span class="g">' + count(r.orders28) + '<small>orders</small></span></div>';
+    }).join('');
+
+    app.innerHTML =
+      header(word(), 'The Board', '<div class="sync">' + pill(state.updated) + '<button class="quiet glass" id="upd">Update my numbers</button></div>') +
+      '<section class="totals" aria-label="This week">' +
+      '<div class="glass hero"><span class="eyebrow">Your rank</span><b>' + (myRank ? '#' + myRank + ' of ' + rows.length : '--') + '</b></div>' +
+      '<div class="glass"><span class="eyebrow">Orders, 28 days, everyone</span><b>' + count(total) + '</b></div>' +
+      '<div class="glass"><span class="eyebrow">On the board</span><b>' + rows.length + '</b></div>' +
+      '<div class="glass"><span class="eyebrow">Top seller</span><b>' + (rows[0] ? '@' + esc(rows[0].handle) : '--') + '</b></div>' +
+      '</section>' +
+      '<section><div class="sec-head"><h2>Leaderboard</h2><span class="eyebrow">Ranked by orders, last 28 days</span></div>' +
+      '<div class="board glass">' + list + '</div></section>' + foot();
+    $('upd').onclick = function () { showForm(); };
+  }
+
+  function route() {
+    if (!API) { app.innerHTML = header('ACADEMY', 'The Board') + '<p class="lead">The tracker is not connected yet.</p>'; return; }
+    if (!state.code) return showCode();
+    if (get(K.week) === weekEnding()) return showBoard();
+    // Learn the program for the wordmark without blocking the form.
+    showForm();
+    api('board', { code: state.code }).then(function (d) {
+      if (d.error === 'wrong_code') { drop(K.code); state.code = ''; return showCode('That code is not right. Check it with Levi.'); }
+      if (d.program && d.program !== state.program) { state.program = d.program; var w = document.querySelector('.wordmark'); if (w) w.textContent = word(); }
+    }).catch(function () {});
+  }
+
+  /* =========================================================
+     Mentor side: ?admin
+     ========================================================= */
+  var A = { rows: [], open: null, filter: 'all', sort: 'orders', q: '' };
+
+  function adminLogin(err) {
+    wide(false);
+    app.innerHTML = header('MENTOR VIEW', 'The Board') +
+      '<form class="panel glass" id="f"><div class="field"><label for="pin">PIN</label><input id="pin" type="password" inputmode="numeric" autocomplete="current-password"></div>' +
+      '<button class="primary" type="submit">Unlock</button>' + (err ? '<p class="err">' + esc(err) + '</p>' : '') + '</form>' + foot('<span>Private</span>');
+    $('f').onsubmit = function (e) { e.preventDefault(); loadAdmin($('pin').value.trim()); };
+  }
+
+  function loadAdmin(pin) {
+    if (!pin) return adminLogin();
+    api('admin', { pin: pin }).then(function (d) {
+      if (d.error) { drop(K.pin, sessionStorage); return adminLogin(d.error === 'wrong_pin' ? 'Wrong PIN.' : d.error); }
+      put(K.pin, pin, sessionStorage);
+      A.rows = d.rows || [];
+      renderAdmin();
+    }).catch(function () { adminLogin('Could not reach the tracker.'); });
+  }
+
+  function members() {
+    var by = {};
+    A.rows.forEach(function (r) { (by[r.handle] = by[r.handle] || []).push(r); });
+    return Object.keys(by).map(function (h) {
+      var list = by[h].sort(function (a, b) { return a.week_ending < b.week_ending ? -1 : 1; });
+      var L = list[list.length - 1], P = list.length > 1 ? list[list.length - 2] : null;
+      var a = L.orders_28, b = P ? P.orders_28 : null;
+      return { handle: h, name: L.display_name, program: L.program === 'academy' ? 'academy' : 'accelerator', rows: list, L: L, delta: a != null && b != null && b > 0 ? (a - b) / b : null };
+    }).sort(function (x, y) { return (y.L.orders_28 || 0) - (x.L.orders_28 || 0); });
+  }
+
+  function bars(rows, key, fmt) {
+    var recent = rows.slice(-8), max = Math.max.apply(null, [1].concat(recent.map(function (r) { return r[key] || 0; })));
+    return '<div class="bars">' + recent.map(function (r) {
+      return '<div class="bar"><span class="lbl">' + esc(shortDate(r.week_ending)) + '</span><span class="track"><span class="fill" style="width:' + ((r[key] || 0) / max * 100).toFixed(1) + '%"></span></span><span class="val">' + fmt(r[key]) + '</span></div>';
+    }).join('') + '</div>';
+  }
+
+  function renderAdmin() {
+    wide(true);
+    var all = members();
+    var scoped = A.filter === 'all' ? all : all.filter(function (m) { return m.program === A.filter; });
+    var rankOf = function (h) { for (var i = 0; i < scoped.length; i++) if (scoped[i].handle === h) return i + 1; return 0; };
+    var tiles = A.sort === 'orders' ? scoped.slice() : scoped.slice().sort(function (a, b) { return (b.L.gmv_28 || 0) - (a.L.gmv_28 || 0); });
+    if (A.q) tiles = tiles.filter(function (m) { return (m.handle + ' ' + m.name).toLowerCase().indexOf(A.q) >= 0; });
+    var last = A.rows.reduce(function (s, r) { return r.created_at > s ? r.created_at : s; }, '');
+    var tOrders = scoped.reduce(function (s, m) { return s + (m.L.orders_28 || 0); }, 0);
+    var tGmv = scoped.reduce(function (s, m) { return s + (m.L.gmv_28 || 0); }, 0);
+    var top = scoped.slice(0, 10), max = Math.max(1, top[0] ? top[0].L.orders_28 || 0 : 0);
+    var open = null; all.forEach(function (m) { if (m.handle === A.open) open = m; });
+    var seg = function (key, opts) { return '<div class="seg glass" role="group">' + opts.map(function (o) { return '<button type="button" data-' + key + '="' + o[0] + '" aria-pressed="' + (A[key] === o[0]) + '">' + o[1] + '</button>'; }).join('') + '</div>'; };
+
+    var detail = '';
+    if (open) {
+      var L = open.L;
+      var st = function (k, v, main) { return '<div class="stat2' + (main ? ' main' : '') + '"><span class="eyebrow">' + k + '</span><b>' + v + '</b></div>'; };
+      detail = '<section class="detail glass" id="detail" aria-live="polite"><div class="dh"><div><h3>#' + (rankOf(open.handle) || '--') + '&nbsp; ' + esc(open.name) + '</h3>' +
+        '<div class="meta">@' + esc(open.handle) + ' &middot; ' + LABEL[open.program] + ' &middot; ' + open.rows.length + (open.rows.length === 1 ? ' week' : ' weeks') + ' in</div></div><button type="button" id="close">Close</button></div>' +
+        '<div class="pane"><div class="kv">' +
+        st('Orders, 28 days', count(L.orders_28), 1) + st('GMV, 28 days', money(L.gmv_28), 1) + st('GMV, 7 days', money(L.gmv_7)) + st('GMV Max spend', money(L.gmv_max_spend)) +
+        st('Samples sent', count(L.samples_sent)) + st('Videos', count(L.videos_posted)) + st('Lives', count(L.lives_count)) + st('Last submitted', esc(shortDate(L.week_ending))) +
+        '</div></div><div class="pane"><span class="eyebrow">Orders, last 28 days, by week</span>' + bars(open.rows, 'orders_28', count) +
+        '<span class="eyebrow" style="margin-top:8px">GMV, last 28 days, by week</span>' + bars(open.rows, 'gmv_28', money) + '</div></section>';
+    }
+
+    app.innerHTML =
+      header('MENTOR VIEW', 'The Board', '<div class="sync">' + pill(last) + '<button class="quiet glass" id="refresh">Refresh</button></div>') +
+      '<section class="totals">' +
+      '<div class="glass hero"><span class="eyebrow">GMV, 28 days, combined</span><b>' + money(tGmv) + '</b></div>' +
+      '<div class="glass"><span class="eyebrow">Orders, 28 days</span><b>' + count(tOrders) + '</b></div>' +
+      '<div class="glass"><span class="eyebrow">Members</span><b>' + scoped.length + '</b></div>' +
+      '<div class="glass"><span class="eyebrow">Accelerator / Academy</span><b>' + all.filter(function (m) { return m.program === 'accelerator'; }).length + ' / ' + all.filter(function (m) { return m.program === 'academy'; }).length + '</b></div></section>' +
+      '<section><div class="sec-head"><h2>Leaderboard</h2><div class="controls"><span class="eyebrow">Ranked by 28 day orders</span>' + seg('filter', [['all', 'All'], ['accelerator', 'Accelerator'], ['academy', 'Academy']]) + '</div></div>' +
+      '<div class="board glass">' + (top.length ? top.map(function (m, i) {
+        return '<button type="button" class="lb' + (i === 0 ? ' first' : '') + (i < 3 ? ' top' : '') + '" data-open="' + esc(m.handle) + '"><span class="rk">' + (i + 1) + '</span>' +
+          '<span class="who"><span class="h">' + esc(m.name) + '<span class="hd">@' + esc(m.handle) + '</span><span class="tag" style="margin-left:8px">' + LABEL[m.program] + '</span></span>' +
+          '<span class="track"><span class="fill" style="width:' + Math.max(2, (m.L.orders_28 || 0) / max * 100).toFixed(1) + '%"></span></span></span>' + delta(m.delta) +
+          '<span class="g">' + count(m.L.orders_28) + '<small>' + money(m.L.gmv_28) + ' GMV</small></span></button>';
+      }).join('') : '<p class="empty">No submissions yet. Send the link out and members show up here.</p>') + '</div></section>' +
+      detail +
+      '<section><div class="sec-head"><h2>Members</h2><div class="controls"><input id="q" class="glass" type="search" placeholder="Find a member" value="' + esc(A.q) + '">' + seg('sort', [['orders', 'Orders'], ['gmv', 'GMV']]) + '</div></div>' +
+      '<div class="tiles">' + (tiles.length ? tiles.map(function (m) {
+        var o = A.sort === 'orders';
+        return '<button type="button" class="tile glass' + (m.handle === A.open ? ' open' : '') + '" data-open="' + esc(m.handle) + '"><span class="top"><span class="nm">' + esc(m.name) + '</span><span class="rank">#' + rankOf(m.handle) + '</span></span>' +
+          '<span class="big">' + (o ? count(m.L.orders_28) : money(m.L.gmv_28)) + '<small>' + (o ? 'orders' : 'GMV') + '</small></span>' +
+          '<span class="sub"><span>' + (o ? money(m.L.gmv_28) + ' GMV' : count(m.L.orders_28) + ' orders') + '</span><span class="tag">' + LABEL[m.program] + '</span></span></button>';
+      }).join('') : '<div class="empty glass">' + (A.q ? 'No member matches that search.' : 'Nobody here yet.') + '</div>') + '</div></section>' +
+      foot('<span>Mentor view. Members only ever see orders.</span>');
+
+    $('refresh').onclick = function () { loadAdmin(get(K.pin, sessionStorage)); };
+    if ($('close')) $('close').onclick = function () { A.open = null; renderAdmin(); };
+    Array.prototype.forEach.call(app.querySelectorAll('[data-open]'), function (b) {
+      b.onclick = function () {
+        var h = b.getAttribute('data-open');
+        A.open = A.open === h && b.classList.contains('tile') ? null : h;
+        renderAdmin();
+        var d = $('detail'); if (d) d.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
+      };
+    });
+    Array.prototype.forEach.call(app.querySelectorAll('[data-filter]'), function (b) { b.onclick = function () { A.filter = b.getAttribute('data-filter'); renderAdmin(); }; });
+    Array.prototype.forEach.call(app.querySelectorAll('[data-sort]'), function (b) { b.onclick = function () { A.sort = b.getAttribute('data-sort'); renderAdmin(); }; });
+    var q = $('q');
+    q.oninput = function () { A.q = q.value.trim().toLowerCase().replace(/^@/, ''); renderAdmin(); var n = $('q'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); };
+  }
+
+  if (ADMIN) {
+    document.title = 'Mentor View';
+    var saved = get(K.pin, sessionStorage);
+    if (!API) adminLogin('The tracker is not connected yet.');
+    else if (saved) loadAdmin(saved); else adminLogin();
+  } else {
+    route();
+  }
+})();
+</script>
+</body>
+</html>
