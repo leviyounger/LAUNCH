@@ -1,18 +1,9 @@
 import { NextResponse } from 'next/server';
-import { sql } from '@/lib/db';
 import { programForCode } from '@/lib/program';
-import { demoRows } from '@/lib/demo';
+import { allSubmissions } from '@/lib/store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-type Raw = {
-  handle: string;
-  display_name: string;
-  program: string | null;
-  week_ending: string;
-  orders_28: number | null;
-};
 
 export type BoardRow = {
   handle: string;
@@ -42,29 +33,22 @@ export async function POST(req: Request) {
   }
 
   try {
-    const all = (process.env.DEMO_DATA === '1'
-      ? (demoRows() as unknown as Raw[])
-      : ((await sql`
-          select handle, display_name, program, week_ending::text as week_ending, orders_28
-          from submissions
-          order by handle asc, week_ending asc
-        `) as unknown as Raw[]));
+    // Rows from before programs existed count as Accelerator.
+    const raw = (await allSubmissions()).filter((r) => (r.program || 'accelerator') === program);
 
-    // Older rows from before programs existed count as Accelerator.
-    const raw = all.filter((r) => (r.program || 'accelerator') === program);
-
-    const byHandle = new Map<string, Raw[]>();
+    const byHandle = new Map<string, typeof raw>();
+    let updated = '';
     for (const r of raw) {
       const list = byHandle.get(r.handle) || [];
       list.push(r);
       byHandle.set(r.handle, list);
+      if (r.created_at > updated) updated = r.created_at;
     }
 
     const rows: BoardRow[] = [];
     for (const [handle, list] of byHandle) {
-      const sorted = [...list].sort((a, b) => a.week_ending.localeCompare(b.week_ending));
-      const latest = sorted[sorted.length - 1];
-      const prev = sorted.length > 1 ? sorted[sorted.length - 2] : null;
+      const latest = list[list.length - 1];
+      const prev = list.length > 1 ? list[list.length - 2] : null;
       const a = latest.orders_28;
       const b = prev ? prev.orders_28 : null;
       rows.push({
@@ -77,7 +61,7 @@ export async function POST(req: Request) {
     }
 
     rows.sort((x, y) => (y.orders28 || 0) - (x.orders28 || 0));
-    return NextResponse.json({ rows });
+    return NextResponse.json({ rows, updated: updated || null });
   } catch (err) {
     console.error('board failed', err);
     return NextResponse.json({ error: 'Could not load the board.' }, { status: 500 });
