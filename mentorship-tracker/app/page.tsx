@@ -39,6 +39,12 @@ function forget(k: string) {
   }
 }
 
+function stamp(iso: string) {
+  const t = new Date(iso);
+  if (Number.isNaN(t.getTime())) return '';
+  return t.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + t.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
 function Header({ title, action }: { title: string; action?: React.ReactNode }) {
   return (
     <header className="top">
@@ -78,6 +84,7 @@ export default function Home() {
 
   const [rows, setRows] = useState<BoardRow[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [updated, setUpdated] = useState<string | null>(null);
 
   useEffect(() => {
     const c = read(K_CODE);
@@ -110,6 +117,7 @@ export default function Home() {
       if (!res.ok) return;
       const data = await res.json();
       setRows(data.rows || []);
+      setUpdated(data.updated || null);
     } catch {
       /* leave the board as it is */
     } finally {
@@ -211,7 +219,12 @@ export default function Home() {
       <main className="wrap">
         <Header
           title="The Board"
-          action={<button className="quiet glass" onClick={() => setView('form')}>Update my numbers</button>}
+          action={
+            <div className="sync">
+              <span className={'pill glass' + (updated ? '' : ' wait')}>{updated ? 'Updated ' + stamp(updated) : 'Waiting on submissions'}</span>
+              <button className="quiet glass" onClick={() => setView('form')}>Update my numbers</button>
+            </div>
+          }
         />
 
         <section className="totals" aria-label="This week">
