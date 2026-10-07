@@ -4,21 +4,21 @@ import { useId, useState } from 'react';
 
 export type Point = { label: string; value: number | null };
 
-const LINE = '#0A6E6A';
-const FILL = '#25F4EE';
-const GRID = '#D2D2D7';
-const AXIS = '#86868B';
-const INK = '#1D1D1F';
+const LINE = '#0A0A0A';
+const FILL = '#0A0A0A';
+const GRID = 'rgba(0,0,0,.12)';
+const AXIS = '#5D5D5B';
+const INK = '#0A0A0A';
 
-function money(n: number) {
-  return '$' + Math.round(n).toLocaleString('en-US');
-}
+const asMoney = (n: number) => '$' + Math.round(n).toLocaleString('en-US');
+const asCount = (n: number) => Math.round(n).toLocaleString('en-US');
 
 /**
  * One measure, one axis. GMV over 7 days and GMV over 28 days live on different
  * scales, so each gets its own panel rather than sharing a y-axis.
  */
-export default function LineChart({ title, points }: { title: string; points: Point[] }) {
+export default function LineChart({ title, points, kind = 'money' }: { title: string; points: Point[]; kind?: 'money' | 'count' }) {
+  const money = kind === 'money' ? asMoney : asCount;
   const [hover, setHover] = useState<number | null>(null);
   const gradId = useId().replace(/:/g, '');
 
@@ -71,7 +71,7 @@ export default function LineChart({ title, points }: { title: string; points: Po
       >
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={FILL} stopOpacity="0.20" />
+            <stop offset="0%" stopColor={FILL} stopOpacity="0.14" />
             <stop offset="100%" stopColor={FILL} stopOpacity="0" />
           </linearGradient>
         </defs>
