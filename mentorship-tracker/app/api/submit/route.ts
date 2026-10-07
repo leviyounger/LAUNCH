@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { sql, normalizeHandle, weekEnding } from '@/lib/db';
+import { normalizeHandle, weekEnding } from '@/lib/db';
+import { saveSubmission } from '@/lib/store';
 import { programForCode } from '@/lib/program';
 
 export const runtime = 'nodejs';
@@ -47,33 +48,19 @@ export async function POST(req: Request) {
   }
 
   try {
-    await sql`
-      insert into submissions (week_ending, handle, display_name, program, orders_28, gmv_7, gmv_28, samples_sent, gmv_max_spend, videos_posted, lives_count)
-      values (
-        ${weekEnding()}::date,
-        ${handle},
-        ${displayName},
-        ${program},
-        ${orders28},
-        ${money(body.gmv7)},
-        ${money(body.gmv28)},
-        ${count(body.samples)},
-        ${money(body.spend)},
-        ${count(body.videos)},
-        ${count(body.lives)}
-      )
-      on conflict (handle, week_ending) do update set
-        display_name  = excluded.display_name,
-        program       = excluded.program,
-        orders_28     = excluded.orders_28,
-        gmv_7         = excluded.gmv_7,
-        gmv_28        = excluded.gmv_28,
-        samples_sent  = excluded.samples_sent,
-        gmv_max_spend = excluded.gmv_max_spend,
-        videos_posted = excluded.videos_posted,
-        lives_count   = excluded.lives_count,
-        created_at    = now()
-    `;
+    await saveSubmission({
+      week_ending: weekEnding(),
+      handle,
+      display_name: displayName,
+      program,
+      orders_28: orders28,
+      gmv_7: money(body.gmv7),
+      gmv_28: money(body.gmv28),
+      samples_sent: count(body.samples),
+      gmv_max_spend: money(body.spend),
+      videos_posted: count(body.videos),
+      lives_count: count(body.lives),
+    });
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('submit failed', err);
