@@ -98,8 +98,8 @@
       fld('name', 'Your name', '', 'First and last', get(K.name), 'text', 'name') +
       fld('handle', 'TikTok handle', '', '@yourshop', h ? '@' + h : '', 'text', 'off') +
       '</div></div>' +
-      '<div class="group"><div class="field feature"><label for="orders28">Sales, last 28 days<span class="sub">Seller Center home page. Set the date to Last 28 days and copy the Orders number. This is the only number that shows on the board.</span></label>' +
-      '<input id="orders28" inputmode="numeric" placeholder="0"></div></div>' +
+      '<div class="group"><div class="field feature"><label for="orders28">Number of sales, last 28 days<span class="sub">This is how many orders you got, not dollars. Go to your Seller Center home page, set the date to Last 28 days, and copy the <b>Orders</b> number. Example: 42, not $1,200. This is the only number that shows on the board.</span></label>' +
+      '<input id="orders28" inputmode="numeric" placeholder="Number of orders, like 42"></div></div>' +
       '<div class="group"><span class="eyebrow">Only Levi sees these</span>' +
       '<div class="row2">' + fld('gmv7', 'GMV, last 7 days', 'Dollars, numbers only', '0', '', 'decimal') + fld('gmv28', 'GMV, last 28 days', 'Dollars, numbers only', '0', '', 'decimal') + '</div>' +
       '<div class="row2">' + fld('samples', 'Samples sent', 'Products sent to creators', '0', '', 'numeric') + fld('spend', 'GMV Max spend', 'Dollars spent this week', '0', '', 'decimal') + '</div>' +
@@ -125,7 +125,8 @@
     var payload = { code: state.code, displayName: v('name'), handle: v('handle'), orders28: v('orders28'), gmv7: v('gmv7'), gmv28: v('gmv28'), samples: v('samples'), spend: v('spend'), videos: v('videos'), lives: v('lives') };
     var err = function (m) { var p = document.querySelector('#f .err'); if (!p) { p = document.createElement('p'); p.className = 'err'; $('f').appendChild(p); } p.textContent = m; };
     if (!payload.displayName || !payload.handle) return err('Name and TikTok handle are both required.');
-    if (!payload.orders28) return err('Add your sales for the last 28 days. Use 0 if you have none yet.');
+    if (!payload.orders28) return err('Add your number of sales for the last 28 days. Use 0 if you have none yet.');
+    if (/[$.]/.test(payload.orders28) || !/^[0-9,\s]+$/.test(payload.orders28)) return err('Number of sales should be a count of orders, like 42. Not a dollar amount.');
     var btn = $('go'); btn.disabled = true; btn.textContent = 'Sending';
     api('submit', payload).then(function (d) {
       if (d.error === 'wrong_code') { drop(K.code); state.code = ''; return showCode('That code is not right. Check it with Levi.'); }
