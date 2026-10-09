@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>The Board</title>
+<title>Shop Tracker</title>
 <meta name="description" content="Weekly numbers for TikTok Mentorship members, mentored by Levi Younger.">
-<link rel="preload" href="archivo.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="intertight.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css">
 <script src="config.js"></script>
 </head>
@@ -48,6 +48,8 @@
   }
 
   function header(word, title, action) {
+    var w = String(word).toLowerCase().replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+    document.title = (word === 'TIKTOK MENTORSHIP' ? '' : w + ' ') + 'Shop Tracker';
     return '<header class="top"><div class="brand"><span class="wordmark">' + esc(word) + '</span><h1>' + esc(title) + '</h1></div>' + (action || '') + '</header>';
   }
   function foot(extra) {
@@ -69,7 +71,7 @@
   function showCode(err) {
     wide(false);
     app.innerHTML =
-      header('ACADEMY', 'The Board') +
+      header('TIKTOK MENTORSHIP', 'Shop Tracker') +
       '<p class="lead">Enter the access code Levi gave you. You only have to do this once on this device.</p>' +
       '<form class="panel glass" id="f"><div class="field"><label for="code">Access code</label>' +
       '<input id="code" autocomplete="off" autocapitalize="none" placeholder="Type it here"></div>' +
@@ -90,13 +92,13 @@
     var action = get(K.week) === weekEnding() ? '<button class="quiet glass" id="toBoard">Leaderboard</button>' : '';
     app.innerHTML =
       header(word(), 'This Week', action) +
-      '<p class="lead">Put your numbers in and the board opens up. Everyone sees orders only. Your dollar numbers go to Levi and nobody else.</p>' +
+      '<p class="lead">Put your numbers in and the board opens up. Everyone sees sales only. Your dollar numbers go to Levi and nobody else.</p>' +
       '<form class="panel glass" id="f">' +
       '<div class="group"><div class="row2">' +
       fld('name', 'Your name', '', 'First and last', get(K.name), 'text', 'name') +
       fld('handle', 'TikTok handle', '', '@yourshop', h ? '@' + h : '', 'text', 'off') +
       '</div></div>' +
-      '<div class="group"><div class="field feature"><label for="orders28">Orders, last 28 days<span class="sub">Seller Center home page. Set the date to Last 28 days and copy the Orders number. This is what shows on the board.</span></label>' +
+      '<div class="group"><div class="field feature"><label for="orders28">Sales, last 28 days<span class="sub">Seller Center home page. Set the date to Last 28 days and copy the Orders number. This is the only number that shows on the board.</span></label>' +
       '<input id="orders28" inputmode="numeric" placeholder="0"></div></div>' +
       '<div class="group"><span class="eyebrow">Only Levi sees these</span>' +
       '<div class="row2">' + fld('gmv7', 'GMV, last 7 days', 'Dollars, numbers only', '0', '', 'decimal') + fld('gmv28', 'GMV, last 28 days', 'Dollars, numbers only', '0', '', 'decimal') + '</div>' +
@@ -123,7 +125,7 @@
     var payload = { code: state.code, displayName: v('name'), handle: v('handle'), orders28: v('orders28'), gmv7: v('gmv7'), gmv28: v('gmv28'), samples: v('samples'), spend: v('spend'), videos: v('videos'), lives: v('lives') };
     var err = function (m) { var p = document.querySelector('#f .err'); if (!p) { p = document.createElement('p'); p.className = 'err'; $('f').appendChild(p); } p.textContent = m; };
     if (!payload.displayName || !payload.handle) return err('Name and TikTok handle are both required.');
-    if (!payload.orders28) return err('Add your orders for the last 28 days. Use 0 if you have none yet.');
+    if (!payload.orders28) return err('Add your sales for the last 28 days. Use 0 if you have none yet.');
     var btn = $('go'); btn.disabled = true; btn.textContent = 'Sending';
     api('submit', payload).then(function (d) {
       if (d.error === 'wrong_code') { drop(K.code); state.code = ''; return showCode('That code is not right. Check it with Levi.'); }
@@ -165,24 +167,24 @@
         '<span class="who"><span class="h">' + esc(r.name) + '<span class="hd">@' + esc(r.handle) + '</span>' + (you ? '<span class="youtag">You</span>' : '') + '</span>' +
         '<span class="track"><span class="fill" style="width:' + Math.max(2, (r.orders28 || 0) / max * 100).toFixed(1) + '%"></span></span></span>' +
         delta(r.delta) +
-        '<span class="g">' + count(r.orders28) + '<small>orders</small></span></div>';
+        '<span class="g">' + count(r.orders28) + '<small>sales</small></span></div>';
     }).join('');
 
     app.innerHTML =
-      header(word(), 'The Board', '<div class="sync">' + pill(state.updated) + '<button class="quiet glass" id="upd">Update my numbers</button></div>') +
+      header(word(), 'Shop Tracker', '<div class="sync">' + pill(state.updated) + '<button class="quiet glass" id="upd">Update my numbers</button></div>') +
       '<section class="totals" aria-label="This week">' +
       '<div class="glass hero"><span class="eyebrow">Your rank</span><b>' + (myRank ? '#' + myRank + ' of ' + rows.length : '--') + '</b></div>' +
-      '<div class="glass"><span class="eyebrow">Orders, 28 days, everyone</span><b>' + count(total) + '</b></div>' +
+      '<div class="glass"><span class="eyebrow">Sales, 28 days, everyone</span><b>' + count(total) + '</b></div>' +
       '<div class="glass"><span class="eyebrow">On the board</span><b>' + rows.length + '</b></div>' +
       '<div class="glass"><span class="eyebrow">Top seller</span><b>' + (rows[0] ? '@' + esc(rows[0].handle) : '--') + '</b></div>' +
       '</section>' +
-      '<section><div class="sec-head"><h2>Leaderboard</h2><span class="eyebrow">Ranked by orders, last 28 days</span></div>' +
+      '<section><div class="sec-head"><h2>Leaderboard</h2><span class="eyebrow">Ranked by sales, last 28 days</span></div>' +
       '<div class="board glass">' + list + '</div></section>' + foot();
     $('upd').onclick = function () { showForm(); };
   }
 
   function route() {
-    if (!API) { app.innerHTML = header('ACADEMY', 'The Board') + '<p class="lead">The tracker is not connected yet.</p>'; return; }
+    if (!API) { app.innerHTML = header('TIKTOK MENTORSHIP', 'Shop Tracker') + '<p class="lead">The tracker is not connected yet.</p>'; return; }
     if (!state.code) return showCode();
     if (get(K.week) === weekEnding()) return showBoard();
     // Learn the program for the wordmark without blocking the form.
@@ -196,11 +198,11 @@
   /* =========================================================
      Mentor side: ?admin
      ========================================================= */
-  var A = { rows: [], open: null, filter: 'all', sort: 'orders', q: '' };
+  var A = { rows: [], open: null, filter: 'all', q: '', money: false };
 
   function adminLogin(err) {
     wide(false);
-    app.innerHTML = header('MENTOR VIEW', 'The Board') +
+    app.innerHTML = header('MENTOR VIEW', 'Shop Tracker') +
       '<form class="panel glass" id="f"><div class="field"><label for="pin">PIN</label><input id="pin" type="password" inputmode="numeric" autocomplete="current-password"></div>' +
       '<button class="primary" type="submit">Unlock</button>' + (err ? '<p class="err">' + esc(err) + '</p>' : '') + '</form>' + foot('<span>Private</span>');
     $('f').onsubmit = function (e) { e.preventDefault(); loadAdmin($('pin').value.trim()); };
@@ -239,11 +241,10 @@
     var all = members();
     var scoped = A.filter === 'all' ? all : all.filter(function (m) { return m.program === A.filter; });
     var rankOf = function (h) { for (var i = 0; i < scoped.length; i++) if (scoped[i].handle === h) return i + 1; return 0; };
-    var tiles = A.sort === 'orders' ? scoped.slice() : scoped.slice().sort(function (a, b) { return (b.L.gmv_28 || 0) - (a.L.gmv_28 || 0); });
+    var tiles = scoped.slice();
     if (A.q) tiles = tiles.filter(function (m) { return (m.handle + ' ' + m.name).toLowerCase().indexOf(A.q) >= 0; });
     var last = A.rows.reduce(function (s, r) { return r.created_at > s ? r.created_at : s; }, '');
     var tOrders = scoped.reduce(function (s, m) { return s + (m.L.orders_28 || 0); }, 0);
-    var tGmv = scoped.reduce(function (s, m) { return s + (m.L.gmv_28 || 0); }, 0);
     var top = scoped.slice(0, 10), max = Math.max(1, top[0] ? top[0].L.orders_28 || 0 : 0);
     var open = null; all.forEach(function (m) { if (m.handle === A.open) open = m; });
     var seg = function (key, opts) { return '<div class="seg glass" role="group">' + opts.map(function (o) { return '<button type="button" data-' + key + '="' + o[0] + '" aria-pressed="' + (A[key] === o[0]) + '">' + o[1] + '</button>'; }).join('') + '</div>'; };
@@ -251,42 +252,44 @@
     var detail = '';
     if (open) {
       var L = open.L;
+      var $$ = function (v) { return A.money ? money(v) : '<span class="hide">&bull;&bull;&bull;</span>'; };
       var st = function (k, v, main) { return '<div class="stat2' + (main ? ' main' : '') + '"><span class="eyebrow">' + k + '</span><b>' + v + '</b></div>'; };
       detail = '<section class="detail glass" id="detail" aria-live="polite"><div class="dh"><div><h3>#' + (rankOf(open.handle) || '--') + '&nbsp; ' + esc(open.name) + '</h3>' +
-        '<div class="meta">@' + esc(open.handle) + ' &middot; ' + LABEL[open.program] + ' &middot; ' + open.rows.length + (open.rows.length === 1 ? ' week' : ' weeks') + ' in</div></div><button type="button" id="close">Close</button></div>' +
+        '<div class="meta">@' + esc(open.handle) + ' &middot; ' + LABEL[open.program] + ' &middot; ' + open.rows.length + (open.rows.length === 1 ? ' week' : ' weeks') + ' in</div></div>' +
+        '<div class="acts"><button type="button" id="money" aria-pressed="' + A.money + '">' + (A.money ? 'Hide dollars' : 'Show dollars') + '</button><button type="button" id="close">Close</button></div></div>' +
         '<div class="pane"><div class="kv">' +
-        st('Orders, 28 days', count(L.orders_28), 1) + st('GMV, 28 days', money(L.gmv_28), 1) + st('GMV, 7 days', money(L.gmv_7)) + st('GMV Max spend', money(L.gmv_max_spend)) +
+        st('Sales, 28 days', count(L.orders_28), 1) + st('GMV, 28 days', $$(L.gmv_28), 1) + st('GMV, 7 days', $$(L.gmv_7)) + st('GMV Max spend', $$(L.gmv_max_spend)) +
         st('Samples sent', count(L.samples_sent)) + st('Videos', count(L.videos_posted)) + st('Lives', count(L.lives_count)) + st('Last submitted', esc(shortDate(L.week_ending))) +
-        '</div></div><div class="pane"><span class="eyebrow">Orders, last 28 days, by week</span>' + bars(open.rows, 'orders_28', count) +
-        '<span class="eyebrow" style="margin-top:8px">GMV, last 28 days, by week</span>' + bars(open.rows, 'gmv_28', money) + '</div></section>';
+        '</div></div><div class="pane"><span class="eyebrow">Sales, last 28 days, by week</span>' + bars(open.rows, 'orders_28', count) +
+        (A.money ? '<span class="eyebrow" style="margin-top:8px">GMV, last 28 days, by week</span>' + bars(open.rows, 'gmv_28', money) : '<p class="note">Dollar figures are hidden so this is safe to screen share. Tap Show dollars to see them.</p>') + '</div></section>';
     }
 
     app.innerHTML =
-      header('MENTOR VIEW', 'The Board', '<div class="sync">' + pill(last) + '<button class="quiet glass" id="refresh">Refresh</button></div>') +
+      header('MENTOR VIEW', 'Shop Tracker', '<div class="sync">' + pill(last) + '<button class="quiet glass" id="refresh">Refresh</button></div>') +
       '<section class="totals">' +
-      '<div class="glass hero"><span class="eyebrow">GMV, 28 days, combined</span><b>' + money(tGmv) + '</b></div>' +
-      '<div class="glass"><span class="eyebrow">Orders, 28 days</span><b>' + count(tOrders) + '</b></div>' +
+      '<div class="glass hero"><span class="eyebrow">Sales, 28 days, combined</span><b>' + count(tOrders) + '</b></div>' +
+      '<div class="glass"><span class="eyebrow">Top seller</span><b>' + (scoped[0] ? '@' + esc(scoped[0].handle) : '--') + '</b></div>' +
       '<div class="glass"><span class="eyebrow">Members</span><b>' + scoped.length + '</b></div>' +
       '<div class="glass"><span class="eyebrow">Accelerator / Academy</span><b>' + all.filter(function (m) { return m.program === 'accelerator'; }).length + ' / ' + all.filter(function (m) { return m.program === 'academy'; }).length + '</b></div></section>' +
-      '<section><div class="sec-head"><h2>Leaderboard</h2><div class="controls"><span class="eyebrow">Ranked by 28 day orders</span>' + seg('filter', [['all', 'All'], ['accelerator', 'Accelerator'], ['academy', 'Academy']]) + '</div></div>' +
+      '<section><div class="sec-head"><h2>Leaderboard</h2><div class="controls"><span class="eyebrow">Ranked by 28 day sales</span>' + seg('filter', [['all', 'All'], ['accelerator', 'Accelerator'], ['academy', 'Academy']]) + '</div></div>' +
       '<div class="board glass">' + (top.length ? top.map(function (m, i) {
         return '<button type="button" class="lb' + (i === 0 ? ' first' : '') + (i < 3 ? ' top' : '') + '" data-open="' + esc(m.handle) + '"><span class="rk">' + (i + 1) + '</span>' +
           '<span class="who"><span class="h">' + esc(m.name) + '<span class="hd">@' + esc(m.handle) + '</span><span class="tag" style="margin-left:8px">' + LABEL[m.program] + '</span></span>' +
           '<span class="track"><span class="fill" style="width:' + Math.max(2, (m.L.orders_28 || 0) / max * 100).toFixed(1) + '%"></span></span></span>' + delta(m.delta) +
-          '<span class="g">' + count(m.L.orders_28) + '<small>' + money(m.L.gmv_28) + ' GMV</small></span></button>';
+          '<span class="g">' + count(m.L.orders_28) + '<small>sales</small></span></button>';
       }).join('') : '<p class="empty">No submissions yet. Send the link out and members show up here.</p>') + '</div></section>' +
       detail +
-      '<section><div class="sec-head"><h2>Members</h2><div class="controls"><input id="q" class="glass" type="search" placeholder="Find a member" value="' + esc(A.q) + '">' + seg('sort', [['orders', 'Orders'], ['gmv', 'GMV']]) + '</div></div>' +
+      '<section><div class="sec-head"><h2>Members</h2><div class="controls"><input id="q" class="glass" type="search" placeholder="Find a member" value="' + esc(A.q) + '">' + '</div></div>' +
       '<div class="tiles">' + (tiles.length ? tiles.map(function (m) {
-        var o = A.sort === 'orders';
         return '<button type="button" class="tile glass' + (m.handle === A.open ? ' open' : '') + '" data-open="' + esc(m.handle) + '"><span class="top"><span class="nm">' + esc(m.name) + '</span><span class="rank">#' + rankOf(m.handle) + '</span></span>' +
-          '<span class="big">' + (o ? count(m.L.orders_28) : money(m.L.gmv_28)) + '<small>' + (o ? 'orders' : 'GMV') + '</small></span>' +
-          '<span class="sub"><span>' + (o ? money(m.L.gmv_28) + ' GMV' : count(m.L.orders_28) + ' orders') + '</span><span class="tag">' + LABEL[m.program] + '</span></span></button>';
+          '<span class="big">' + count(m.L.orders_28) + '<small>sales</small></span>' +
+          '<span class="sub">' + delta(m.delta) + '<span class="tag">' + LABEL[m.program] + '</span></span></button>';
       }).join('') : '<div class="empty glass">' + (A.q ? 'No member matches that search.' : 'Nobody here yet.') + '</div>') + '</div></section>' +
-      foot('<span>Mentor view. Members only ever see orders.</span>');
+      foot('<span>Mentor view. Dollars stay hidden until you open a member and tap Show dollars.</span>');
 
     $('refresh').onclick = function () { loadAdmin(get(K.pin, sessionStorage)); };
     if ($('close')) $('close').onclick = function () { A.open = null; renderAdmin(); };
+    if ($('money')) $('money').onclick = function () { A.money = !A.money; renderAdmin(); };
     Array.prototype.forEach.call(app.querySelectorAll('[data-open]'), function (b) {
       b.onclick = function () {
         var h = b.getAttribute('data-open');
@@ -296,7 +299,6 @@
       };
     });
     Array.prototype.forEach.call(app.querySelectorAll('[data-filter]'), function (b) { b.onclick = function () { A.filter = b.getAttribute('data-filter'); renderAdmin(); }; });
-    Array.prototype.forEach.call(app.querySelectorAll('[data-sort]'), function (b) { b.onclick = function () { A.sort = b.getAttribute('data-sort'); renderAdmin(); }; });
     var q = $('q');
     q.oninput = function () { A.q = q.value.trim().toLowerCase().replace(/^@/, ''); renderAdmin(); var n = $('q'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); };
   }
