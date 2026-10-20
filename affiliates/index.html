@@ -299,6 +299,32 @@ try{
 render();
 const FORM_URL="https://docs.google.com/forms/d/1KUwdtzeW_G85Z7EyDYiNKEGTlCGbeb7og4Ynwj3vnLg/formResponse";
 const F_HANDLE="entry.1747510852", F_CODE="entry.837319177";
+function sendViaFrame(handle,code){
+  return new Promise((res,rej)=>{
+    const name="lcsend"+Date.now();
+    const fr=document.createElement("iframe");fr.name=name;fr.hidden=true;fr.setAttribute("aria-hidden","true");
+    const fm=document.createElement("form");fm.method="POST";fm.action=FORM_URL;fm.target=name;fm.hidden=true;
+    [[F_HANDLE,handle],[F_CODE,code]].forEach(([k,v])=>{const i=document.createElement("input");i.type="hidden";i.name=k;i.value=v;fm.appendChild(i)});
+    let done=false;const fin=ok=>{if(done)return;done=true;setTimeout(()=>{fr.remove();fm.remove()},3000);ok?res():rej(new Error("frame"))};
+    fr.onload=()=>fin(true);
+    document.body.appendChild(fr);document.body.appendChild(fm);
+    try{fm.submit()}catch(e){fin(false);return}
+    setTimeout(()=>fin(true),6000);
+  });
+}
+function sendViaImage(handle,code){
+  return new Promise((res,rej)=>{
+    const q=new URLSearchParams();q.append(F_HANDLE,handle);q.append(F_CODE,code);q.append("submit","Submit");
+    const im=new Image();im.onload=im.onerror=()=>res();setTimeout(res,4000);
+    try{im.src=FORM_URL+"?"+q.toString()}catch(e){rej(e)}
+  });
+}
+async function sendCode(handle,code){
+  try{const body=new URLSearchParams();body.append(F_HANDLE,handle);body.append(F_CODE,code);
+    await fetch(FORM_URL,{method:"POST",mode:"no-cors",body});return}catch(e){}
+  try{await sendViaFrame(handle,code);return}catch(e){}
+  await sendViaImage(handle,code);
+}
 (function(){
   const f=$("codeForm"),h=$("cHandle"),c=$("cCode"),btn=$("cBtn"),msg=$("cMsg");
   let sent=0;const seen=new Set();
@@ -313,8 +339,7 @@ const F_HANDLE="entry.1747510852", F_CODE="entry.837319177";
     if(seen.has(code)){msg.textContent="You already sent that one.";c.select();return}
     btn.disabled=true;msg.textContent="Sending";
     try{
-      const body=new URLSearchParams();body.append(F_HANDLE,"@"+handle);body.append(F_CODE,code);
-      await fetch(FORM_URL,{method:"POST",mode:"no-cors",body});
+      await sendCode("@"+handle,code);
       seen.add(code);sent++;
       try{localStorage.setItem("lcHandle",handle)}catch(e){}
       msg.className="msg ok";msg.textContent="Got it. "+sent+(sent===1?" code":" codes")+" sent. Paste the next one.";
