@@ -129,6 +129,7 @@ footer{font-size:12px;opacity:.72;display:flex;flex-wrap:wrap;gap:8px 24px;paddi
 .codes button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .codes .msg{font-size:13px;min-height:18px;color:rgba(255,255,255,.75);margin:0}
 .codes .msg:empty{display:none}
+.codes .golink{display:inline-block;font:800 13px var(--body);letter-spacing:.06em;text-transform:uppercase;background:#fff;color:#000;padding:12px 22px;border-radius:999px;text-decoration:none}
 .codes .msg.ok{color:#fff}
 .codes .msg.ok::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#3ddc97;margin-right:8px;vertical-align:1px}
 @media (max-width:760px){.codes form{grid-template-columns:minmax(0,1fr)}}
@@ -325,7 +326,14 @@ async function sendCode(handle,code){
   try{await sendViaFrame(handle,code);return}catch(e){}
   await sendViaImage(handle,code);
 }
+const PUBLIC_URL="https://leviyounger.github.io/LAUNCH/affiliates/";
 (function(){
+  if(!/(^|\.)github\.io$/.test(location.hostname)&&location.protocol!=="file:"){
+    const s=$("codeForm"),m=$("cMsg");
+    s.innerHTML='<a class="golink" href="'+PUBLIC_URL+'" target="_blank" rel="noopener">Open the public board to submit codes</a>';
+    s.style.display="block";m.className="msg";m.textContent="Codes can only be sent from the public board link.";
+    return;
+  }
   const f=$("codeForm"),h=$("cHandle"),c=$("cCode"),btn=$("cBtn"),msg=$("cMsg");
   let sent=0;const seen=new Set();
   try{const s=localStorage.getItem("lcHandle");if(s)h.value=s}catch(e){}
