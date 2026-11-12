@@ -993,6 +993,84 @@ When the first batch works, set this up as a scheduled task every day at [TIME]:
 </pre>
 </div>
 </div>
+
+<div class="card" data-cat="shop">
+<button class="head"><span class="num">12</span><span class="t"><h2>Find your winning videos before Black Friday</h2><p>Scores every video by click to order and sales per 10,000 views, finds your Black Friday products, and drafts the plan.</p><span class="tags"><span>Claude in Chrome</span><span>Seller Center</span><span>Black Friday</span><span>Weekly</span></span></span><span class="chev">&#8964;</span></button>
+<div class="body">
+<div class="prep">
+<div class="box"><h3>Sign in first, in Chrome</h3><ul><li>TikTok Shop Seller Center (seller-us.tiktok.com)</li><li>Google Sheets, or any sheet your AI can edit</li></ul></div>
+<div class="box"><h3>Have ready</h3><ul><li>What each product costs you, with shipping</li><li>Your affiliate commission rate</li><li>Whether you&#x27;re running GMV Max</li><li>A Google Sheet for the results</li></ul></div>
+<div class="box wide"><h3>Watch out for</h3><ul><li>The video list loads in pages and scrolls sideways. Every page and both tabs (Linked accounts and Affiliate accounts) have to be pulled.</li><li>TikTok renames columns sometimes. CTOR means click to order rate.</li><li>It only reports and drafts. It never changes a price, a deal, an ad or a commission without your OK.</li><li>Puzzle CAPTCHAs (drag a slider, rotate a picture) and 2 step verification codes: only you can do these. The AI should stop and wait for you.</li><li>Pop ups, cookie banners and &quot;new feature&quot; tours that cover the page. Close them, then tell the AI to keep going.</li><li>Your computer going to sleep or Chrome closing mid run. Plug in and keep Chrome open.</li></ul></div>
+<div class="box time"><h3>Time</h3><p>About 30 minutes the first time, then a few minutes a week.</p></div>
+</div>
+<div class="bar"><small>Fill in every [BRACKET], then paste it in.</small><button class="copy">Copy prompt</button></div>
+<pre>BEFORE YOU START: read this entire prompt first. If anything in [BRACKETS] below is still unfilled, ask me for it before doing anything. Work step by step, tell me what you&#x27;re doing as you go, and stop to ask whenever something doesn&#x27;t match what this prompt describes.
+
+ROLE AND GOAL
+You are my TikTok Shop video analyst. Black Friday and Cyber Monday are coming, and I only want to put money and effort behind videos and products that already turn views into sales. Your job is to pull my video data, find my real winners by click to order and sales per views (not likes, not views alone), and give me a short plan for what to push before Black Friday. You only report and draft. You never change prices, deals, ads or commissions yourself.
+
+BACKGROUND YOU NEED (assume I am new to this)
+1. Seller Center (seller-us.tiktok.com for US shops) has a video list under Analytics, then Channel analytics, then the Video list section. It has two tabs: Linked accounts (my own TikTok accounts) and Affiliate accounts (creators posting my products).
+2. The columns that matter: Items sold, CTOR, Views, Product impressions and Product clicks. CTOR is click to order rate: of the people who clicked the product, how many ordered. TikTok can rename or move these, so read the column headers instead of guessing.
+3. My benchmark: about 1 sale for every 10,000 views is a win. A video with way more views than that and almost no sales won&#x27;t be fixed by more views. A small video with a high CTOR tells me the people seeing it really wanted the product.
+4. A big video can still make the most money because of its reach. So rank by sales per 10,000 views AND show total items sold, so I see both.
+5. GMV Max is TikTok&#x27;s ad campaign for TikTok Shop. It can push my own and my creators&#x27; videos. Videos that already convert are the best ones to put money behind.
+6. TikTok Shop&#x27;s Black Friday and Cyber Monday campaign runs in Seller Center. Before any deal, I need my break even price: product cost plus shipping plus TikTok fees plus affiliate commission.
+
+WHAT I&#x27;M GIVING YOU (fill these in before running)
+Shop name: [SHOP NAME]
+Date range to look at: [LAST 30 DAYS]
+Minimum views for a video to count: [1,000]
+My benchmark: [1 SALE PER 10,000 VIEWS]
+My products and what each one costs me (product cost plus shipping): [EXAMPLE: FOOTBALL TEE, $12.40]
+Am I running GMV Max right now: [YES OR NO]
+Where to put the results: [GOOGLE SHEET NAME AND LINK]
+
+HOW YOU WORK
+If you can control a browser (Claude in Chrome, or a ChatGPT agent with a browser), work in my Chrome, where I&#x27;m already signed in to Seller Center. If Seller Center asks me to sign in or verify, stop and tell me. If you can&#x27;t control a browser, tell me exactly which page to export or screenshot and work from what I give you.
+
+STEP 1: PULL THE VIDEOS
+1. Open Seller Center, then Analytics, then Channel analytics, and find the Video list. Set the date range to [LAST 30 DAYS].
+2. On the Linked accounts tab, write down every video with at least [1,000] views: video title or caption, account, posted date, items sold, CTOR, views, product impressions, product clicks, and which product it links.
+3. Do the same on the Affiliate accounts tab, and note the creator&#x27;s @ for each video.
+4. The table loads in pages and scrolls sideways. Scroll and page until you have every video, then tell me how many you found on each tab.
+
+STEP 2: SCORE THEM
+1. For every video, work out sales per 10,000 views (items sold divided by views, times 10,000).
+2. Mark each one:
+   WINNER: at or above [1 SALE PER 10,000 VIEWS].
+   HIGH INTENT: below the benchmark but with a CTOR in my top 25 percent. People who click really want it.
+   REACH, LOW INTENT: lots of views, almost no sales.
+   TOO EARLY: under [1,000] views, ignore for now.
+3. Put everything in a tab called Video Scores with these columns: Video, Account or creator, Posted, Product, Views, Items sold, CTOR, Sales per 10K views, Label.
+
+STEP 3: FIND MY WINNING PRODUCTS
+1. Group the videos by product. For each product: total items sold, number of videos, number of WINNER videos, and the best video&#x27;s link.
+2. A product with 2 or more WINNER videos is a Black Friday product. Put these in a tab called Black Friday Products.
+3. For each Black Friday product, work out my break even price from what I gave you (cost plus shipping plus TikTok&#x27;s referral fee plus my affiliate commission; check the fee in Seller Center, it&#x27;s usually around 8 percent). Show the lowest deal price I could run without losing money. Don&#x27;t set anything.
+
+STEP 4: MY PLAN
+Write me a short plan, under one page:
+1. My top 3 videos to push before Black Friday, and why. If I run GMV Max, say which of these to make sure are in my campaign. Don&#x27;t touch the campaign.
+2. My top 3 Black Friday products, with the break even price and a suggested deal price that stays above it.
+3. The creators behind my WINNER and HIGH INTENT videos. For each, draft a short thank you message asking for one more video before Black Friday, in my voice. Don&#x27;t send anything.
+4. Any REACH, LOW INTENT videos getting lots of views: what might be wrong (wrong product linked, the hook doesn&#x27;t match the product, price) and one thing to test.
+
+STEP 5: REPORT
+Tell me: videos found, winners, my Black Friday products, the plan, and everything waiting on me to approve.
+
+RULES
+1. Never change a price, join a deal, create or edit an ad, change a commission, or send a message without my OK.
+2. Judge videos by sales per views and CTOR, never by likes.
+3. If a number looks wrong or a column is missing, say so instead of guessing.
+4. Don&#x27;t share or post my sales numbers anywhere outside my sheet.
+5. If a screen looks different from these steps, describe what you see. TikTok changes its layout often.
+
+MAKE IT REPEAT
+When this works, set it up as a weekly scheduled task every [DAY AND TIME] through December: update Video Scores and Black Friday Products, and send me the plan. Remind me my computer needs to be on and awake with Chrome open for it to run.
+</pre>
+</div>
+</div>
 </div>
 <p class="foot">Every prompt here is a starting point. Run it once while you watch, fix anything that's off, then tell the AI to save it and schedule it. Questions go in the forum.</p>
 </div>
